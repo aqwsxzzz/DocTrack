@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from doctrack.auth import models as _auth_models  # noqa: F401  (register tables)
 from doctrack.client import models as _client_models  # noqa: F401  (register tables)
 from doctrack.config import settings
+from doctrack.library import models as _library_models  # noqa: F401  (register tables)
 from doctrack.database import Base
 
 config = context.config

@@ -8,6 +8,7 @@ from .auth.router import router as auth_router
 from .auth.seed import seed_admin
 from .client.router import router as client_router
 from .config import settings
+from .library.router import router as library_router
 from .database import AsyncSessionLocal
 
 
@@ -30,6 +31,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(client_router)
+app.include_router(library_router)
 
 
 @app.get("/health")

@@ -43,9 +43,16 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
    `UserClient` only. FE: admin-guarded `/admin/clients` list (search + paginate +
    create dialog), client detail with member management, admin nav link. Verified
    (curl access-control matrix + FE typecheck/build/lint).
-3. **Library** (upload/list/download) ← next. **Forces storage-provider pick** —
-   blocked on that deferred decision before uploads can be built.
-4. **Original Vault** + custody ledger.
+3. **Library** (upload/list/download) ✅ **built** (2026-06-09). Storage behind a
+   `StorageBackend` interface with a **Cloudinary** adapter (authenticated `raw`
+   uploads, time-limited signed download URLs; `public_id = <uuid>/<filename>` so
+   downloads keep the original name). `StoredFile` + `LibraryDocument` models +
+   migration `0003`. Endpoints: upload / list / download-url / delete, all gated by
+   the `UserClient` rule (delete is admin-only). FE: client documents view
+   (`/clients/:id`) for admins + wired members, dashboard client cards. Verified
+   e2e (real upload → signed download round-trip + access matrix) and FE
+   typecheck/build/lint.
+4. **Original Vault** + custody ledger ← next.
 
 ## Decisions (resolved 2026-06-09)
 
@@ -64,5 +71,7 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
 
 ## Deferred
 
-- Storage provider (Cloudflare R2 / Supabase / Backblaze — free tiers).
+- ~~Storage provider~~ — chosen: **Cloudinary** (authenticated raw assets). Creds in
+  gitignored `apps/api/.env` (`CLOUDINARY_*`).
 - Hosting for app + Postgres (Neon / Render / Fly / Supabase — free tiers).
+- Library polish: signed-URL TTL is 300s; no inline preview/thumbnails yet.

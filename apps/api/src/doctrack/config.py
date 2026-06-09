@@ -30,5 +30,12 @@ class Settings(BaseSettings):
     admin_password: str = "123456789"
     admin_full_name: str = "Jorge Barreto"
 
+    # Cloudinary storage. Required for the Library feature uploads/downloads.
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+    # Seconds a signed download URL stays valid.
+    download_url_ttl_seconds: int = 300
+
 
 settings = Settings()

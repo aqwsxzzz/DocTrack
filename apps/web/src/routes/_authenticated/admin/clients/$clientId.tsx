@@ -33,11 +33,20 @@ function ClientDetailPage() {
         ← Volver a clientes
       </Link>
       <Card>
-        <CardHeader>
-          <CardTitle>
-            {client.first_name} {client.last_name}
-          </CardTitle>
-          <CardDescription>{client.notes ?? "Sin notas"}</CardDescription>
+        <CardHeader className="flex-row items-start justify-between">
+          <div className="space-y-1.5">
+            <CardTitle>
+              {client.first_name} {client.last_name}
+            </CardTitle>
+            <CardDescription>{client.notes ?? "Sin notas"}</CardDescription>
+          </div>
+          <Link
+            to="/clients/$clientId"
+            params={{ clientId }}
+            className="text-sm text-muted-foreground underline"
+          >
+            Ver documentos
+          </Link>
         </CardHeader>
         <CardContent className="space-y-3">
           <h2 className="text-sm font-semibold">Miembros con acceso</h2>
