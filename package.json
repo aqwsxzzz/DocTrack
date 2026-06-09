@@ -1,0 +1,17 @@
+{
+  "name": "doctrack",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "web:dev": "npm run dev --workspace=apps/web",
+    "web:build": "npm run build --workspace=apps/web",
+    "web:lint": "npm run lint --workspace=apps/web",
+    "api:up": "docker compose -f apps/api/docker-compose.yml up",
+    "api:down": "docker compose -f apps/api/docker-compose.yml down",
+    "dev": "concurrently \"npm run web:dev\" \"npm run api:up\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
