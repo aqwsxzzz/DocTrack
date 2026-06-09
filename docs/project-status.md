@@ -36,8 +36,15 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
    protected `_authenticated` shell, placeholder dashboard. FE verified
    (typecheck + build + lint clean). **BE not yet run** — needs `npm run api:up`
    (Docker) to apply the migration, seed admin, and smoke-test endpoints.
-2. **Client + UserClient** ← next. Admin panel (create clients, wire members).
-3. **Library** (upload/list/download) — forces storage-provider pick.
+2. **Client + UserClient** ✅ **built** (2026-06-09). BE: `Client` + `UserClient`
+   models + migration, paged/searchable `GET /clients` (admin sees all, members
+   see only wired), client CRUD (admin), member wiring (`GET/POST/DELETE
+   /clients/{id}/members`), `GET /auth/users` (admin picker). Access enforced via
+   `UserClient` only. FE: admin-guarded `/admin/clients` list (search + paginate +
+   create dialog), client detail with member management, admin nav link. Verified
+   (curl access-control matrix + FE typecheck/build/lint).
+3. **Library** (upload/list/download) ← next. **Forces storage-provider pick** —
+   blocked on that deferred decision before uploads can be built.
 4. **Original Vault** + custody ledger.
 
 ## Decisions (resolved 2026-06-09)
