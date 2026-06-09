@@ -10,6 +10,7 @@ from doctrack.auth import models as _auth_models  # noqa: F401  (register tables
 from doctrack.client import models as _client_models  # noqa: F401  (register tables)
 from doctrack.config import settings
 from doctrack.library import models as _library_models  # noqa: F401  (register tables)
+from doctrack.vault import models as _vault_models  # noqa: F401  (register tables)
 from doctrack.database import Base
 
 config = context.config

@@ -18,6 +18,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedClientsClientIdRouteImport } from './routes/_authenticated/clients/$clientId'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients/index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients/$clientId'
+import { Route as AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport } from './routes/_authenticated/clients/$clientId/originals/$originalId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -66,6 +67,12 @@ const AuthenticatedAdminClientsClientIdRoute =
     path: '/clients/$clientId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedClientsClientIdOriginalsOriginalIdRoute =
+  AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport.update({
+    id: '/originals/$originalId',
+    path: '/originals/$originalId',
+    getParentRoute: () => AuthenticatedClientsClientIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,9 +80,10 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/clients/$clientId': typeof AuthenticatedClientsClientIdRoute
+  '/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +91,10 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/clients/$clientId': typeof AuthenticatedClientsClientIdRoute
+  '/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
+  '/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,9 +104,10 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/clients/$clientId': typeof AuthenticatedClientsClientIdRoute
+  '/_authenticated/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
   '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/_authenticated/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/admin/clients/$clientId'
     | '/admin/clients/'
+    | '/clients/$clientId/originals/$originalId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/admin/clients/$clientId'
     | '/admin/clients'
+    | '/clients/$clientId/originals/$originalId'
   id:
     | '__root__'
     | '/'
@@ -131,6 +143,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clients/$clientId'
     | '/_authenticated/admin/clients/$clientId'
     | '/_authenticated/admin/clients/'
+    | '/_authenticated/clients/$clientId/originals/$originalId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsClientIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/clients/$clientId/originals/$originalId': {
+      id: '/_authenticated/clients/$clientId/originals/$originalId'
+      path: '/originals/$originalId'
+      fullPath: '/clients/$clientId/originals/$originalId'
+      preLoaderRoute: typeof AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport
+      parentRoute: typeof AuthenticatedClientsClientIdRoute
+    }
   }
 }
 
@@ -222,16 +242,32 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedClientsClientIdRouteChildren {
+  AuthenticatedClientsClientIdOriginalsOriginalIdRoute: typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
+}
+
+const AuthenticatedClientsClientIdRouteChildren: AuthenticatedClientsClientIdRouteChildren =
+  {
+    AuthenticatedClientsClientIdOriginalsOriginalIdRoute:
+      AuthenticatedClientsClientIdOriginalsOriginalIdRoute,
+  }
+
+const AuthenticatedClientsClientIdRouteWithChildren =
+  AuthenticatedClientsClientIdRoute._addFileChildren(
+    AuthenticatedClientsClientIdRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedClientsClientIdRoute: typeof AuthenticatedClientsClientIdRoute
+  AuthenticatedClientsClientIdRoute: typeof AuthenticatedClientsClientIdRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedClientsClientIdRoute: AuthenticatedClientsClientIdRoute,
+  AuthenticatedClientsClientIdRoute:
+    AuthenticatedClientsClientIdRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

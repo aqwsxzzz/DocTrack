@@ -8,6 +8,7 @@ import {
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useClientQuery } from "@/features/clients/api/clients-queries";
 import { ClientLibrary } from "@/features/library/components/client-library";
+import { ClientVault } from "@/features/vault/components/client-vault";
 
 export const Route = createFileRoute("/_authenticated/clients/$clientId")({
   component: ClientDocumentsPage,
@@ -48,8 +49,9 @@ function ClientDocumentsPage() {
             </Link>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-8">
           <ClientLibrary clientId={clientId} />
+          <ClientVault clientId={clientId} />
         </CardContent>
       </Card>
     </div>

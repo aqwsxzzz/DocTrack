@@ -52,7 +52,18 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
    (`/clients/:id`) for admins + wired members, dashboard client cards. Verified
    e2e (real upload → signed download round-trip + access matrix) and FE
    typecheck/build/lint.
-4. **Original Vault** + custody ledger ← next.
+4. **Original Vault** + custody ledger ✅ **built** (2026-06-09). `OriginalDocument`
+   (filed-under `client_id` controls access; `external_owner_id` is a reference
+   only) + append-only `CustodyEvent` ledger + `TenderType` enum, migration `0004`.
+   Optional Cloudinary backup copy reuses `StoredFile`. Endpoints: originals
+   create/list/get/delete, backup download, custody add/list — current holder =
+   latest event by `occurred_at`; holder is an app user or a free label. All gated
+   by `UserClient` (delete admin-only). FE: originals list + create dialog on the
+   client page, custody detail route (`/clients/:id/originals/:oid`) with timeline,
+   add-movement form, and backup download. Verified e2e (custody ordering, holder
+   resolution, backup round-trip, access matrix) and FE typecheck/build/lint.
+
+**All four planned slices are built.**
 
 ## Decisions (resolved 2026-06-09)
 
