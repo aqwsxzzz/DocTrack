@@ -30,20 +30,30 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
 
 ## Build plan (slices)
 
-1. **Auth spine** ← next. BE: `User` + migration, bcrypt, `register`/`login` (JWT) /
-   `me`, seeded admin. FE: login + register, Zustand auth store, protected shell,
-   placeholder dashboard.
-2. **Client + UserClient** + admin panel (create clients, wire members).
+1. **Auth spine** ✅ **built** (2026-06-09). BE: `User` model + migration, bcrypt,
+   `register`/`login` (JWT Bearer) / `me`, admin seeded on startup. FE: login +
+   register pages, Zustand auth store (persisted), axios Bearer interceptor,
+   protected `_authenticated` shell, placeholder dashboard. FE verified
+   (typecheck + build + lint clean). **BE not yet run** — needs `npm run api:up`
+   (Docker) to apply the migration, seed admin, and smoke-test endpoints.
+2. **Client + UserClient** ← next. Admin panel (create clients, wire members).
 3. **Library** (upload/list/download) — forces storage-provider pick.
 4. **Original Vault** + custody ledger.
 
-## ⚠️ Open decisions — answer these before building Slice 1
+## Decisions (resolved 2026-06-09)
 
-1. **JWT delivery** — Bearer token (recommended, simplest) vs httpOnly cookies.
-2. **Admin seed** — name + email + starting password for the admin (you), or use a
-   placeholder (`admin@doctrack.local` / `changeme`) to edit later.
-3. **Language** — Spanish-only vs bilingual (ES/EN). `i18next` is installed either
-   way; this decides whether to set up translation files now or hardcode Spanish.
+1. **JWT delivery** = Bearer token (access token in `Authorization` header).
+2. **Admin seed** = real values, hardcoded as config defaults (overridable by env):
+   `Jorge Barreto` / `jbarretolarrosa@gmail.com` / `123456789` (throwaway — change
+   once a change-password flow exists).
+3. **Language** = Spanish-only. `i18next` installed but UI strings hardcoded in
+   Spanish for now; no translation files yet.
+
+## ⚠️ Before first BE run
+
+- `access_token_ttl_minutes` is **15** and there is **no refresh-token flow yet**, so
+  sessions expire after 15 min. Either bump the TTL in `.env` for now or add refresh
+  tokens in a later pass.
 
 ## Deferred
 

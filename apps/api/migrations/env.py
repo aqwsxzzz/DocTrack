@@ -6,9 +6,12 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from doctrack.auth import models as _auth_models  # noqa: F401  (register tables)
+from doctrack.config import settings
 from doctrack.database import Base
 
 config = context.config
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
