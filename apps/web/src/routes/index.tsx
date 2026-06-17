@@ -1,16 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 
 export const Route = createFileRoute("/")({
-  component: IndexPage,
+  beforeLoad: () => {
+    const { token } = useAuthStore.getState();
+    throw redirect({ to: token ? "/seguros" : "/login" });
+  },
 });
-
-function IndexPage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground">DocTrack</h1>
-        <p className="mt-2 text-muted-foreground">Ready to build.</p>
-      </div>
-    </main>
-  );
-}

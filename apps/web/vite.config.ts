@@ -15,4 +15,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // 5173 is used by another local app (Ovejitas); pin DocTrack to 5174.
+    port: 5174,
+    strictPort: true,
+  },
 });
