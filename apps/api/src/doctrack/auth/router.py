@@ -6,7 +6,13 @@ from ..database import get_db
 from . import service
 from .dependencies import get_current_user, require_admin
 from .models import User
-from .schemas import AuthResponse, LoginRequest, RegisterRequest, UserOut
+from .schemas import (
+    AuthResponse,
+    ChangePasswordRequest,
+    LoginRequest,
+    RegisterRequest,
+    UserOut,
+)
 from .security import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -42,6 +48,22 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)) -> AuthR
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    changed = await service.change_password(
+        db, current_user, data.current_password, data.new_password
+    )
+    if not changed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual es incorrecta",
+        )
 
 
 @router.get("/users", response_model=list[UserOut])

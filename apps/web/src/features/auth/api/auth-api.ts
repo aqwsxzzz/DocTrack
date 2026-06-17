@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 import type {
   AuthResponse,
+  ChangePasswordRequest,
   LoginRequest,
   RegisterRequest,
   User,
@@ -19,4 +20,10 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
 export async function fetchMe(): Promise<User> {
   const response = await apiClient.get<User>("/auth/me");
   return response.data;
+}
+
+export async function changePassword(
+  data: ChangePasswordRequest,
+): Promise<void> {
+  await apiClient.post("/auth/change-password", data);
 }

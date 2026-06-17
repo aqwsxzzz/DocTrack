@@ -13,7 +13,7 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 export const Route = createFileRoute("/register")({
   beforeLoad: () => {
     if (useAuthStore.getState().token) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: "/seguros" });
     }
   },
   component: RegisterPage,

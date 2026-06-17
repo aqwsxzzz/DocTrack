@@ -32,7 +32,7 @@ export function LoginForm(): React.JSX.Element {
 
   function onSubmit(values: LoginValues): void {
     mutation.mutate(values, {
-      onSuccess: () => navigate({ to: "/dashboard" }),
+      onSuccess: () => navigate({ to: "/seguros" }),
       onError: () => toast.error("Correo o contraseña incorrectos"),
     });
   }

@@ -1,8 +1,9 @@
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
-import { login, register } from "./auth-api";
+import { changePassword, login, register } from "./auth-api";
 import { useAuthStore } from "../store/auth-store";
 import type {
   AuthResponse,
+  ChangePasswordRequest,
   LoginRequest,
   RegisterRequest,
 } from "../types/auth-types";
@@ -29,4 +30,12 @@ export function useRegisterMutation(): UseMutationResult<
     mutationFn: register,
     onSuccess: (data) => setAuth(data.access_token, data.user),
   });
+}
+
+export function useChangePasswordMutation(): UseMutationResult<
+  void,
+  Error,
+  ChangePasswordRequest
+> {
+  return useMutation({ mutationFn: changePassword });
 }

@@ -19,6 +19,11 @@ export interface RegisterRequest {
   full_name: string;
 }
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   token_type: string;

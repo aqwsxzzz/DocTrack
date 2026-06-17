@@ -34,7 +34,7 @@ export function RegisterForm(): React.JSX.Element {
 
   function onSubmit(values: RegisterValues): void {
     mutation.mutate(values, {
-      onSuccess: () => navigate({ to: "/dashboard" }),
+      onSuccess: () => navigate({ to: "/seguros" }),
       onError: (error) => {
         const message =
           isAxiosError(error) && error.response?.status === 409
