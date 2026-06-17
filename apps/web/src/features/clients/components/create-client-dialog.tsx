@@ -18,8 +18,7 @@ import {
 import { useCreateClientMutation } from "../api/clients-queries";
 
 const clientSchema = z.object({
-  first_name: z.string().min(1, "Requerido"),
-  last_name: z.string().min(1, "Requerido"),
+  name: z.string().min(1, "Requerido").max(255),
   notes: z.string().max(10_000).optional(),
 });
 
@@ -30,7 +29,7 @@ export function CreateClientDialog(): React.JSX.Element {
   const mutation = useCreateClientMutation();
   const form = useForm<ClientValues>({
     resolver: zodResolver(clientSchema),
-    defaultValues: { first_name: "", last_name: "", notes: "" },
+    defaultValues: { name: "", notes: "" },
   });
 
   function onSubmit(values: ClientValues): void {
@@ -56,8 +55,7 @@ export function CreateClientDialog(): React.JSX.Element {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormTextField control={form.control} name="first_name" label="Nombre" />
-            <FormTextField control={form.control} name="last_name" label="Apellido" />
+            <FormTextField control={form.control} name="name" label="Nombre" />
             <FormTextField control={form.control} name="notes" label="Notas" />
             <DialogFooter>
               <Button type="submit" disabled={mutation.isPending}>

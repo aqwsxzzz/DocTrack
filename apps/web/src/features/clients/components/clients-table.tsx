@@ -40,7 +40,7 @@ export function ClientsTable({
                 params={{ clientId: client.id }}
                 className="font-medium underline"
               >
-                {client.first_name} {client.last_name}
+                {client.name}
               </Link>
             </TableCell>
             <TableCell className="text-muted-foreground">

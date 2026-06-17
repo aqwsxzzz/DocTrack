@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.models import Role, User
@@ -9,7 +9,7 @@ from .schemas import ClientCreate, ClientUpdate, MemberOut
 
 
 async def create_client(db: AsyncSession, data: ClientCreate) -> Client:
-    client = Client(first_name=data.first_name, last_name=data.last_name, notes=data.notes)
+    client = Client(name=data.name, notes=data.notes)
     db.add(client)
     await db.commit()
     await db.refresh(client)
@@ -29,17 +29,27 @@ def _visible_clients_query(user: User) -> Select[tuple[Client]]:
     return query
 
 
+def visible_client_ids_query(user: User) -> Select[tuple[uuid.UUID]]:
+    """Client ids the user may see — all for admins, wired-only for members."""
+    query = select(Client.id)
+    if user.role is not Role.admin:
+        query = query.join(UserClient, UserClient.client_id == Client.id).where(
+            UserClient.user_id == user.id
+        )
+    return query
+
+
 async def list_clients(
     db: AsyncSession, user: User, *, limit: int, offset: int, search: str | None
 ) -> tuple[list[Client], int]:
     query = _visible_clients_query(user)
     if search:
         term = f"%{search.strip()}%"
-        query = query.where(or_(Client.first_name.ilike(term), Client.last_name.ilike(term)))
+        query = query.where(Client.name.ilike(term))
 
     total = await db.scalar(select(func.count()).select_from(query.subquery())) or 0
     result = await db.execute(
-        query.order_by(Client.first_name, Client.last_name).limit(limit).offset(offset)
+        query.order_by(Client.name).limit(limit).offset(offset)
     )
     return list(result.scalars().all()), total
 

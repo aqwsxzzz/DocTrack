@@ -1,7 +1,6 @@
 export interface Client {
   id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
   notes: string | null;
   created_at: string;
 }
@@ -12,8 +11,7 @@ export interface ClientListResponse {
 }
 
 export interface ClientCreate {
-  first_name: string;
-  last_name: string;
+  name: string;
   notes?: string | null;
 }
 
