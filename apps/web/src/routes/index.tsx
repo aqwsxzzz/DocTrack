@@ -4,6 +4,6 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
     const { token } = useAuthStore.getState();
-    throw redirect({ to: token ? "/dashboard" : "/login" });
+    throw redirect({ to: token ? "/seguros" : "/login" });
   },
 });

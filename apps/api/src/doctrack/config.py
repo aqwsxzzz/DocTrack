@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     refresh_token_ttl_days: int = 7
     # NoDecode: read as a raw string and split on commas, so .env can be
     # `CORS_ORIGINS=http://a,http://b` instead of requiring JSON.
-    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5174"]
 
     @field_validator("cors_origins", mode="before")
     @classmethod

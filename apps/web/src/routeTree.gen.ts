@@ -13,12 +13,14 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedClientsClientIdRouteImport } from './routes/_authenticated/clients/$clientId'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedSegurosIndexRouteImport } from './routes/_authenticated/seguros/index'
+import { Route as AuthenticatedBovedaIndexRouteImport } from './routes/_authenticated/boveda/index'
+import { Route as AuthenticatedSegurosSeguroIdRouteImport } from './routes/_authenticated/seguros/$seguroId'
+import { Route as AuthenticatedBovedaOriginalIdRouteImport } from './routes/_authenticated/boveda/$originalId'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients/index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients/$clientId'
-import { Route as AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport } from './routes/_authenticated/clients/$clientId/originals/$originalId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -39,20 +41,38 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedClientsClientIdRoute =
-  AuthenticatedClientsClientIdRouteImport.update({
-    id: '/clients/$clientId',
-    path: '/clients/$clientId',
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSegurosIndexRoute =
+  AuthenticatedSegurosIndexRouteImport.update({
+    id: '/seguros/',
+    path: '/seguros/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBovedaIndexRoute =
+  AuthenticatedBovedaIndexRouteImport.update({
+    id: '/boveda/',
+    path: '/boveda/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSegurosSeguroIdRoute =
+  AuthenticatedSegurosSeguroIdRouteImport.update({
+    id: '/seguros/$seguroId',
+    path: '/seguros/$seguroId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBovedaOriginalIdRoute =
+  AuthenticatedBovedaOriginalIdRouteImport.update({
+    id: '/boveda/$originalId',
+    path: '/boveda/$originalId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminClientsIndexRoute =
@@ -67,34 +87,32 @@ const AuthenticatedAdminClientsClientIdRoute =
     path: '/clients/$clientId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedClientsClientIdOriginalsOriginalIdRoute =
-  AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport.update({
-    id: '/originals/$originalId',
-    path: '/originals/$originalId',
-    getParentRoute: () => AuthenticatedClientsClientIdRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
+  '/boveda/$originalId': typeof AuthenticatedBovedaOriginalIdRoute
+  '/seguros/$seguroId': typeof AuthenticatedSegurosSeguroIdRoute
+  '/boveda/': typeof AuthenticatedBovedaIndexRoute
+  '/seguros/': typeof AuthenticatedSegurosIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
-  '/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
+  '/boveda/$originalId': typeof AuthenticatedBovedaOriginalIdRoute
+  '/seguros/$seguroId': typeof AuthenticatedSegurosSeguroIdRoute
+  '/boveda': typeof AuthenticatedBovedaIndexRoute
+  '/seguros': typeof AuthenticatedSegurosIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
-  '/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,12 +120,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/clients/$clientId': typeof AuthenticatedClientsClientIdRouteWithChildren
+  '/_authenticated/boveda/$originalId': typeof AuthenticatedBovedaOriginalIdRoute
+  '/_authenticated/seguros/$seguroId': typeof AuthenticatedSegurosSeguroIdRoute
+  '/_authenticated/boveda/': typeof AuthenticatedBovedaIndexRoute
+  '/_authenticated/seguros/': typeof AuthenticatedSegurosIndexRoute
   '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
-  '/_authenticated/clients/$clientId/originals/$originalId': typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,35 +135,41 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/account'
     | '/admin'
-    | '/dashboard'
-    | '/clients/$clientId'
+    | '/boveda/$originalId'
+    | '/seguros/$seguroId'
+    | '/boveda/'
+    | '/seguros/'
     | '/admin/clients/$clientId'
     | '/admin/clients/'
-    | '/clients/$clientId/originals/$originalId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/register'
+    | '/account'
     | '/admin'
-    | '/dashboard'
-    | '/clients/$clientId'
+    | '/boveda/$originalId'
+    | '/seguros/$seguroId'
+    | '/boveda'
+    | '/seguros'
     | '/admin/clients/$clientId'
     | '/admin/clients'
-    | '/clients/$clientId/originals/$originalId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
     | '/register'
+    | '/_authenticated/account'
     | '/_authenticated/admin'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/clients/$clientId'
+    | '/_authenticated/boveda/$originalId'
+    | '/_authenticated/seguros/$seguroId'
+    | '/_authenticated/boveda/'
+    | '/_authenticated/seguros/'
     | '/_authenticated/admin/clients/$clientId'
     | '/_authenticated/admin/clients/'
-    | '/_authenticated/clients/$clientId/originals/$originalId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -183,13 +209,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -197,11 +216,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/clients/$clientId': {
-      id: '/_authenticated/clients/$clientId'
-      path: '/clients/$clientId'
-      fullPath: '/clients/$clientId'
-      preLoaderRoute: typeof AuthenticatedClientsClientIdRouteImport
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/seguros/': {
+      id: '/_authenticated/seguros/'
+      path: '/seguros'
+      fullPath: '/seguros/'
+      preLoaderRoute: typeof AuthenticatedSegurosIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/boveda/': {
+      id: '/_authenticated/boveda/'
+      path: '/boveda'
+      fullPath: '/boveda/'
+      preLoaderRoute: typeof AuthenticatedBovedaIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/seguros/$seguroId': {
+      id: '/_authenticated/seguros/$seguroId'
+      path: '/seguros/$seguroId'
+      fullPath: '/seguros/$seguroId'
+      preLoaderRoute: typeof AuthenticatedSegurosSeguroIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/boveda/$originalId': {
+      id: '/_authenticated/boveda/$originalId'
+      path: '/boveda/$originalId'
+      fullPath: '/boveda/$originalId'
+      preLoaderRoute: typeof AuthenticatedBovedaOriginalIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/clients/': {
@@ -217,13 +264,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/clients/$clientId'
       preLoaderRoute: typeof AuthenticatedAdminClientsClientIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/clients/$clientId/originals/$originalId': {
-      id: '/_authenticated/clients/$clientId/originals/$originalId'
-      path: '/originals/$originalId'
-      fullPath: '/clients/$clientId/originals/$originalId'
-      preLoaderRoute: typeof AuthenticatedClientsClientIdOriginalsOriginalIdRouteImport
-      parentRoute: typeof AuthenticatedClientsClientIdRoute
     }
   }
 }
@@ -242,32 +282,22 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedClientsClientIdRouteChildren {
-  AuthenticatedClientsClientIdOriginalsOriginalIdRoute: typeof AuthenticatedClientsClientIdOriginalsOriginalIdRoute
-}
-
-const AuthenticatedClientsClientIdRouteChildren: AuthenticatedClientsClientIdRouteChildren =
-  {
-    AuthenticatedClientsClientIdOriginalsOriginalIdRoute:
-      AuthenticatedClientsClientIdOriginalsOriginalIdRoute,
-  }
-
-const AuthenticatedClientsClientIdRouteWithChildren =
-  AuthenticatedClientsClientIdRoute._addFileChildren(
-    AuthenticatedClientsClientIdRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedClientsClientIdRoute: typeof AuthenticatedClientsClientIdRouteWithChildren
+  AuthenticatedBovedaOriginalIdRoute: typeof AuthenticatedBovedaOriginalIdRoute
+  AuthenticatedSegurosSeguroIdRoute: typeof AuthenticatedSegurosSeguroIdRoute
+  AuthenticatedBovedaIndexRoute: typeof AuthenticatedBovedaIndexRoute
+  AuthenticatedSegurosIndexRoute: typeof AuthenticatedSegurosIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedClientsClientIdRoute:
-    AuthenticatedClientsClientIdRouteWithChildren,
+  AuthenticatedBovedaOriginalIdRoute: AuthenticatedBovedaOriginalIdRoute,
+  AuthenticatedSegurosSeguroIdRoute: AuthenticatedSegurosSeguroIdRoute,
+  AuthenticatedBovedaIndexRoute: AuthenticatedBovedaIndexRoute,
+  AuthenticatedSegurosIndexRoute: AuthenticatedSegurosIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

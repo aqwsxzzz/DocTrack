@@ -23,6 +23,12 @@ apiClient.interceptors.response.use(
       (error as { response?: { status?: number } }).response?.status === 401
     ) {
       useAuthStore.getState().logout();
+      // Bounce to login for sessions that expire while the app is open.
+      // A full reload clears stale query cache; the route guard handles
+      // the navigation-via-history case before any request is made.
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
     }
     return Promise.reject(error);
   },
