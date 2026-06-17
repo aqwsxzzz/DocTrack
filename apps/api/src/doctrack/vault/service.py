@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.models import User
 from ..client.models import Client
+from ..client.service import visible_client_ids_query
 from ..library.models import StoredFile
 from ..storage import StorageBackend, StoredFileRef
 from .models import CustodyEvent, OriginalDocument, TenderType
@@ -26,9 +27,9 @@ async def _client_names(db: AsyncSession, ids: Iterable[uuid.UUID]) -> dict[uuid
     if not id_list:
         return {}
     rows = await db.execute(
-        select(Client.id, Client.first_name, Client.last_name).where(Client.id.in_(id_list))
+        select(Client.id, Client.name).where(Client.id.in_(id_list))
     )
-    return {row.id: f"{row.first_name} {row.last_name}" for row in rows.all()}
+    return {row.id: row.name for row in rows.all()}
 
 
 async def get_current_holders(
@@ -56,17 +57,21 @@ async def get_current_holders(
 
 
 def _to_original_out(
-    doc: OriginalDocument, current_holder: str | None, owner_name: str | None
+    doc: OriginalDocument,
+    current_holder: str | None,
+    owner_name: str | None,
+    client_name: str | None,
 ) -> OriginalOut:
     return OriginalOut(
         id=doc.id,
         client_id=doc.client_id,
+        client_name=client_name,
         external_owner_id=doc.external_owner_id,
         external_owner_name=owner_name,
         tender_type=doc.tender_type,
         tender_number=doc.tender_number,
         contract_expiration_date=doc.contract_expiration_date,
-        title=doc.title,
+        description=doc.description,
         has_backup=doc.file_id is not None,
         filename=doc.file.filename if doc.file else None,
         current_holder=current_holder,
@@ -77,12 +82,16 @@ def _to_original_out(
 
 async def build_originals(db: AsyncSession, docs: list[OriginalDocument]) -> list[OriginalOut]:
     holders = await get_current_holders(db, [d.id for d in docs])
-    owner_names = await _client_names(db, [d.external_owner_id for d in docs if d.external_owner_id])
+    names = await _client_names(
+        db,
+        [d.client_id for d in docs] + [d.external_owner_id for d in docs if d.external_owner_id],
+    )
     return [
         _to_original_out(
             d,
             holders.get(d.id),
-            owner_names.get(d.external_owner_id) if d.external_owner_id else None,
+            names.get(d.external_owner_id) if d.external_owner_id else None,
+            names.get(d.client_id),
         )
         for d in docs
     ]
@@ -116,7 +125,7 @@ async def create_original(
     client_id: uuid.UUID,
     tender_type: TenderType,
     tender_number: str,
-    title: str,
+    description: str,
     external_owner_id: uuid.UUID | None,
     contract_expiration_date: date | None,
     created_by: uuid.UUID,
@@ -139,7 +148,7 @@ async def create_original(
         tender_type=tender_type,
         tender_number=tender_number,
         contract_expiration_date=contract_expiration_date,
-        title=title,
+        description=description,
         file_id=file_id,
         created_by=created_by,
     )
@@ -153,6 +162,26 @@ async def list_originals(
     db: AsyncSession, client_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[OriginalDocument], int]:
     base = select(OriginalDocument).where(OriginalDocument.client_id == client_id)
+    total = await db.scalar(select(func.count()).select_from(base.subquery())) or 0
+    result = await db.execute(
+        base.order_by(OriginalDocument.created_at.desc()).limit(limit).offset(offset)
+    )
+    return list(result.scalars().unique().all()), total
+
+
+async def list_all_originals(
+    db: AsyncSession,
+    user: User,
+    *,
+    client_id: uuid.UUID | None,
+    limit: int,
+    offset: int,
+) -> tuple[list[OriginalDocument], int]:
+    base = select(OriginalDocument).where(
+        OriginalDocument.client_id.in_(visible_client_ids_query(user))
+    )
+    if client_id is not None:
+        base = base.where(OriginalDocument.client_id == client_id)
     total = await db.scalar(select(func.count()).select_from(base.subquery())) or 0
     result = await db.execute(
         base.order_by(OriginalDocument.created_at.desc()).limit(limit).offset(offset)

@@ -75,9 +75,11 @@ async def create_original(
     client_id: uuid.UUID,
     tender_type: TenderType = Form(...),
     tender_number: str = Form(..., min_length=1, max_length=255),
-    title: str = Form(..., min_length=1, max_length=255),
+    description: str = Form(..., min_length=1, max_length=10_000),
     external_owner_id: uuid.UUID | None = Form(default=None),
     contract_expiration_date: date | None = Form(default=None),
+    holder_user_id: uuid.UUID | None = Form(default=None),
+    holder_label: str | None = Form(default=None, max_length=255),
     file: UploadFile | None = File(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -86,18 +88,31 @@ async def create_original(
     await _require_client_access(client_id, current_user, db)
     if external_owner_id is not None and await client_service.get_client(db, external_owner_id) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="External owner not found")
+    if holder_user_id is not None and await db.get(User, holder_user_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Holder user not found")
     file_ref = await _maybe_upload(file, storage)
     doc = await service.create_original(
         db,
         client_id=client_id,
         tender_type=tender_type,
         tender_number=tender_number,
-        title=title,
+        description=description,
         external_owner_id=external_owner_id,
         contract_expiration_date=contract_expiration_date,
         created_by=current_user.id,
         file_ref=file_ref,
     )
+    holder_label = holder_label.strip() if holder_label else None
+    if holder_user_id is not None or holder_label:
+        await service.add_custody_event(
+            db,
+            original_id=doc.id,
+            holder_user_id=holder_user_id,
+            holder_label=holder_label,
+            occurred_at=datetime.now(UTC),
+            recorded_by=current_user.id,
+            note=None,
+        )
     return (await service.build_originals(db, [doc]))[0]
 
 
@@ -111,6 +126,20 @@ async def list_originals(
 ) -> OriginalListResponse:
     await _require_client_access(client_id, current_user, db)
     items, total = await service.list_originals(db, client_id, limit=limit, offset=offset)
+    return OriginalListResponse(items=await service.build_originals(db, items), total=total)
+
+
+@router.get("/originals", response_model=OriginalListResponse)
+async def list_all_originals(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    client_id: uuid.UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> OriginalListResponse:
+    items, total = await service.list_all_originals(
+        db, current_user, client_id=client_id, limit=limit, offset=offset
+    )
     return OriginalListResponse(items=await service.build_originals(db, items), total=total)
 
 

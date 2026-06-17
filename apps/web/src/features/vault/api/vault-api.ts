@@ -4,6 +4,7 @@ import type {
   CreateOriginalInput,
   CustodyEvent,
   Original,
+  OriginalFilters,
   OriginalListResponse,
 } from "../types/vault-types";
 
@@ -16,6 +17,15 @@ export async function listOriginals(
   return response.data;
 }
 
+export async function listAllOriginals(
+  filters: OriginalFilters,
+): Promise<OriginalListResponse> {
+  const response = await apiClient.get<OriginalListResponse>("/originals", {
+    params: { client_id: filters.client_id ?? undefined },
+  });
+  return response.data;
+}
+
 export async function createOriginal(
   clientId: string,
   input: CreateOriginalInput,
@@ -23,12 +33,18 @@ export async function createOriginal(
   const form = new FormData();
   form.append("tender_type", input.tender_type);
   form.append("tender_number", input.tender_number);
-  form.append("title", input.title);
+  form.append("description", input.description);
   if (input.external_owner_id) {
     form.append("external_owner_id", input.external_owner_id);
   }
   if (input.contract_expiration_date) {
     form.append("contract_expiration_date", input.contract_expiration_date);
+  }
+  if (input.holder_user_id) {
+    form.append("holder_user_id", input.holder_user_id);
+  }
+  if (input.holder_label) {
+    form.append("holder_label", input.holder_label);
   }
   if (input.file) {
     form.append("file", input.file);

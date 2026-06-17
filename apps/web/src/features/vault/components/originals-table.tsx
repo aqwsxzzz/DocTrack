@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,15 +12,16 @@ import type { Original } from "../types/vault-types";
 
 interface OriginalsTableProps {
   originals: Original[];
-  clientId: string;
+  showClient?: boolean;
   onDelete?: (original: Original) => void;
 }
 
 export function OriginalsTable({
   originals,
-  clientId,
+  showClient = false,
   onDelete,
 }: OriginalsTableProps): React.JSX.Element {
+  const navigate = useNavigate();
   if (originals.length === 0) {
     return <p className="text-sm text-muted-foreground">No hay originales.</p>;
   }
@@ -28,45 +29,59 @@ export function OriginalsTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Título</TableHead>
-          <TableHead>Tipo</TableHead>
+          {showClient && <TableHead>Cliente</TableHead>}
           <TableHead>N.º</TableHead>
+          <TableHead>Tipo</TableHead>
           <TableHead>Tenedor actual</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
+          {onDelete && <TableHead className="text-right">Acciones</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {originals.map((original) => (
-          <TableRow key={original.id}>
+          <TableRow
+            key={original.id}
+            className="cursor-pointer"
+            onClick={() =>
+              navigate({
+                to: "/boveda/$originalId",
+                params: { originalId: original.id },
+              })
+            }
+          >
+            {showClient && (
+              <TableCell className="font-medium">
+                {original.client_name ?? "—"}
+              </TableCell>
+            )}
             <TableCell>
               <Link
-                to="/clients/$clientId/originals/$originalId"
-                params={{ clientId, originalId: original.id }}
+                to="/boveda/$originalId"
+                params={{ originalId: original.id }}
                 className="font-medium underline"
               >
-                {original.title}
+                {original.tender_number}
               </Link>
             </TableCell>
             <TableCell className="text-muted-foreground">
               {original.tender_type}
             </TableCell>
             <TableCell className="text-muted-foreground">
-              {original.tender_number}
-            </TableCell>
-            <TableCell className="text-muted-foreground">
               {original.current_holder ?? "Sin registro"}
             </TableCell>
-            <TableCell className="text-right">
-              {onDelete && (
+            {onDelete && (
+              <TableCell className="text-right">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onDelete(original)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(original);
+                  }}
                 >
                   Eliminar
                 </Button>
-              )}
-            </TableCell>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

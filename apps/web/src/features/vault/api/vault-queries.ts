@@ -10,6 +10,7 @@ import {
   createOriginal,
   deleteOriginal,
   getOriginal,
+  listAllOriginals,
   listCustody,
   listOriginals,
 } from "./vault-api";
@@ -18,11 +19,13 @@ import type {
   CreateOriginalInput,
   CustodyEvent,
   Original,
+  OriginalFilters,
   OriginalListResponse,
 } from "../types/vault-types";
 
 export const vaultKeys = {
   originals: (clientId: string) => ["originals", clientId] as const,
+  allOriginals: (filters: OriginalFilters) => ["originals", "all", filters] as const,
   original: (originalId: string) => ["original", originalId] as const,
   custody: (originalId: string) => ["custody", originalId] as const,
 };
@@ -33,6 +36,15 @@ export function useOriginalsQuery(
   return useQuery({
     queryKey: vaultKeys.originals(clientId),
     queryFn: () => listOriginals(clientId),
+  });
+}
+
+export function useAllOriginalsQuery(
+  filters: OriginalFilters,
+): UseQueryResult<OriginalListResponse, Error> {
+  return useQuery({
+    queryKey: vaultKeys.allOriginals(filters),
+    queryFn: () => listAllOriginals(filters),
   });
 }
 
@@ -54,25 +66,35 @@ export function useCustodyQuery(
   });
 }
 
-export function useCreateOriginalMutation(
-  clientId: string,
-): UseMutationResult<Original, Error, CreateOriginalInput> {
+interface CreateOriginalVars {
+  clientId: string;
+  input: CreateOriginalInput;
+}
+
+export function useCreateOriginalMutation(): UseMutationResult<
+  Original,
+  Error,
+  CreateOriginalVars
+> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateOriginalInput) => createOriginal(clientId, input),
+    mutationFn: ({ clientId, input }: CreateOriginalVars) =>
+      createOriginal(clientId, input),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: vaultKeys.originals(clientId) }),
+      queryClient.invalidateQueries({ queryKey: ["originals"] }),
   });
 }
 
-export function useDeleteOriginalMutation(
-  clientId: string,
-): UseMutationResult<void, Error, string> {
+export function useDeleteOriginalMutation(): UseMutationResult<
+  void,
+  Error,
+  string
+> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteOriginal,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: vaultKeys.originals(clientId) }),
+      queryClient.invalidateQueries({ queryKey: ["originals"] }),
   });
 }
 

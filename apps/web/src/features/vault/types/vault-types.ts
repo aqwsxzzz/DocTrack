@@ -11,15 +11,20 @@ export const TENDER_TYPES: readonly TenderType[] = [
   "Otro",
 ];
 
+export interface OriginalFilters {
+  client_id?: string | null;
+}
+
 export interface Original {
   id: string;
   client_id: string;
+  client_name: string | null;
   external_owner_id: string | null;
   external_owner_name: string | null;
   tender_type: TenderType;
   tender_number: string;
   contract_expiration_date: string | null;
-  title: string;
+  description: string;
   has_backup: boolean;
   filename: string | null;
   current_holder: string | null;
@@ -32,12 +37,18 @@ export interface OriginalListResponse {
   total: number;
 }
 
+export type HolderSelection =
+  | { holder_user_id: string }
+  | { holder_label: string };
+
 export interface CreateOriginalInput {
   tender_type: TenderType;
   tender_number: string;
-  title: string;
+  description: string;
   external_owner_id?: string | null;
   contract_expiration_date?: string | null;
+  holder_user_id?: string | null;
+  holder_label?: string | null;
   file?: File | null;
 }
 

@@ -39,7 +39,8 @@ class OriginalDocument(Base):
     )
     tender_number: Mapped[str] = mapped_column(String(255), nullable=False)
     contract_expiration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Free-form description of what the bond is for — required, can be long.
+    description: Mapped[str] = mapped_column(Text, nullable=False)
     file_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("stored_files.id"), nullable=True
     )

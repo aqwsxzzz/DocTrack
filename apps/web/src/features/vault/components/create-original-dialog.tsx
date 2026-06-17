@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,46 +21,63 @@ import {
 } from "@/components/ui/dialog";
 import { useClientsQuery } from "@/features/clients/api/clients-queries";
 import { useCreateOriginalMutation } from "../api/vault-queries";
-import { TENDER_TYPES, type TenderType } from "../types/vault-types";
+import {
+  TENDER_TYPES,
+  type HolderSelection,
+  type TenderType,
+} from "../types/vault-types";
+import { InitialHolderField } from "./initial-holder-field";
 
 const NO_OWNER = "__none__";
 
 export function CreateOriginalDialog({
   clientId,
 }: {
-  clientId: string;
+  clientId?: string;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(clientId ?? "");
   const [tenderType, setTenderType] = useState<TenderType>("Mantenimiento de oferta");
   const [tenderNumber, setTenderNumber] = useState("");
-  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [ownerId, setOwnerId] = useState(NO_OWNER);
   const [expiration, setExpiration] = useState("");
+  const [holder, setHolder] = useState<HolderSelection | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const clientsQuery = useClientsQuery({ limit: 100, offset: 0, search: "" });
-  const mutation = useCreateOriginalMutation(clientId);
+  const mutation = useCreateOriginalMutation();
 
   function handleSubmit(): void {
-    if (!tenderNumber.trim() || !title.trim()) {
-      toast.error("Completá el número de licitación y el título");
+    const targetClient = clientId ?? selectedClient;
+    if (!targetClient) {
+      toast.error("Elegí un cliente");
+      return;
+    }
+    if (!tenderNumber.trim() || !description.trim()) {
+      toast.error("Completá el número de licitación y la descripción");
       return;
     }
     mutation.mutate(
       {
-        tender_type: tenderType,
-        tender_number: tenderNumber.trim(),
-        title: title.trim(),
-        external_owner_id: ownerId === NO_OWNER ? null : ownerId,
-        contract_expiration_date: expiration || null,
-        file,
+        clientId: targetClient,
+        input: {
+          tender_type: tenderType,
+          tender_number: tenderNumber.trim(),
+          description: description.trim(),
+          external_owner_id: ownerId === NO_OWNER ? null : ownerId,
+          contract_expiration_date: expiration || null,
+          file,
+          ...(holder ?? {}),
+        },
       },
       {
         onSuccess: () => {
           toast.success("Original registrado");
           setOpen(false);
           setTenderNumber("");
-          setTitle("");
+          setDescription("");
           setExpiration("");
+          setHolder(null);
           setFile(null);
         },
         onError: () => toast.error("No se pudo registrar el original"),
@@ -77,8 +95,25 @@ export function CreateOriginalDialog({
           <DialogTitle>Registrar fianza original</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {!clientId && (
+            <div className="space-y-2">
+              <Label>Cliente</Label>
+              <Select value={selectedClient} onValueChange={setSelectedClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Elegí un cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientsQuery.data?.items.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
-            <Label>Tipo de licitación</Label>
+            <Label>Tipo de fianza</Label>
             <Select
               value={tenderType}
               onValueChange={(value) => setTenderType(value as TenderType)}
@@ -104,11 +139,11 @@ export function CreateOriginalDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="original-title">Título</Label>
-            <Input
-              id="original-title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
+            <Label htmlFor="original-description">Descripción</Label>
+            <Textarea
+              id="original-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -121,12 +156,16 @@ export function CreateOriginalDialog({
                 <SelectItem value={NO_OWNER}>Sin especificar</SelectItem>
                 {clientsQuery.data?.items.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.first_name} {client.last_name}
+                    {client.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+          <InitialHolderField
+            key={open ? "open" : "closed"}
+            onChange={setHolder}
+          />
           <div className="space-y-2">
             <Label htmlFor="expiration">Vencimiento del contrato</Label>
             <Input

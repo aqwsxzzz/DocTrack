@@ -9,12 +9,13 @@ from .models import TenderType
 class OriginalOut(BaseModel):
     id: uuid.UUID
     client_id: uuid.UUID
+    client_name: str | None
     external_owner_id: uuid.UUID | None
     external_owner_name: str | None
     tender_type: TenderType
     tender_number: str
     contract_expiration_date: date | None
-    title: str
+    description: str
     has_backup: bool
     filename: str | None
     current_holder: str | None
