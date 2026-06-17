@@ -5,8 +5,10 @@
 DocTrack helps an insurance assessor (admin) and their clients manage two distinct
 documentation needs:
 
-1. **Library** — generic documents the assessor publishes (Pólizas, Facturas,
-   Certificados, …) that clients can self-serve and download any time.
+1. **Library** — **seguros** the assessor publishes, each a typed record (Vehículos,
+   Incendio, Fianzas, …) grouping its documents (póliza, recibos, facturas, …) that
+   clients can self-serve and download any time. Type-specific fields exist mainly to
+   **filter/search**; the files are the point.
 2. **Original Vault** — physical original *fianza* (surety bond) documents whose
    **location/custody is tracked** over time, backed by an unofficial cloud copy.
 
@@ -31,12 +33,18 @@ is a backup.
 
 ```
 User            id, email, password_hash, role (admin | member), full_name
-Client          id, first_name, last_name, notes
+Client          id, name (required), notes
 UserClient      user_id, client_id, granted_at, granted_by   ← the ONLY source of access
 
-── Feature 1: Library ──
-LibraryDocument
-  id, client_id, category (Póliza | Factura | Certificado | …)
+── Feature 1: Library (seguros) ──
+Seguro                  ← typed insurance record; the filter target (1 per póliza)
+  id, client_id, insurance_type, numero_poliza
+  vigencia_desde (required), vigencia_hasta (nullable → "vigencia abierta")
+  estado (vigente | anulada | devuelta)
+  attributes (JSONB — per-type fields, see catalog; empty for most types)
+  created_by, created_at
+SeguroDocument          ← the files belonging to a seguro (1:N)
+  id, seguro_id, doc_kind (Póliza | Recibo | Factura | Certificado | …)
   title, file → StoredFile, uploaded_by, uploaded_at
 
 ── Feature 2: Original Vault (fianzas) ──
@@ -62,6 +70,37 @@ StoredFile      id, object_key, filename, content_type, size, uploaded_at
 ```
 
 ---
+
+## Insurance types & per-type fields (Feature 1)
+
+`insurance_type` is a **fixed code enum** (not admin-editable). A `Seguro` always
+carries the **common** fields; only some types add **type-specific** fields, which
+live in the `attributes` JSONB bag (validated per-type in code). Filters on common
+fields are plain `WHERE`; the few hot type-specific filters get JSONB expression
+indexes.
+
+**Common to every type:** `client_id`, `numero_poliza`, `vigencia_desde`,
+`vigencia_hasta?` (null → vigencia abierta), `estado`, documents.
+
+| Tipo          | Campos extra (en `attributes`)                       | Vigencia |
+|---------------|------------------------------------------------------|----------|
+| **Vehículos** | matrícula, chasis, motor, padrón (todos opcionales, únicos → filtros) | desde–hasta |
+| **Incendio**  | —                                                    | desde–hasta |
+| **Combinado** | —                                                    | desde–hasta |
+| **RC**        | —                                                    | desde–hasta |
+| **RV**        | —                                                    | desde–hasta |
+| **ADT**       | —                                                    | abierta (solo `desde`) |
+| **Fianzas**   | nº licitación, tipo licitación, duración contrato    | abierta (cierra al devolver el original) |
+
+Only **Vehículos** and **Fianzas** populate `attributes`; every other type leaves it
+empty. The list will grow ("etc.") — adding a type means a new enum value + (optional)
+per-type schema in code, **no migration**.
+
+> Fianzas appear in **both** features and are kept **separate**: the *Library* Seguro
+> is the insurance record (admin-owned, with its own licitación fields for filtering);
+> the *Vault* `OriginalDocument` is the custody record of the physical original
+> (created/held by various members). No FK between them — different owners and
+> lifecycles. An optional link may be added later if navigation between them is needed.
 
 ## Custody semantics (Feature 2)
 
@@ -101,11 +140,22 @@ Members self-register; the admin wires them to the clients they may access
 
 ## Decisions locked
 
-- Two separate document entities (Library vs Original Vault), sharing `StoredFile`.
+- Two separate features (Library vs Original Vault), sharing `StoredFile`, **kept
+  decoupled even for fianzas** (no FK) — different owners and lifecycles.
+- **Library is a typed `Seguro`** (parent) with child `SeguroDocument` rows per file,
+  **superseding** the old flat `LibraryDocument`. A seguro groups many documents.
+- `insurance_type` and `doc_kind` are **fixed code enums**, not admin-editable.
+- Per-type fields live in `attributes` (JSONB), validated per-type in code; only
+  **Vehículos** (matrícula/chasis/motor/padrón) and **Fianzas** (nº/tipo/duración de
+  licitación) use it.
+- **Vigencia:** `vigencia_desde` required; `vigencia_hasta` nullable (null → abierta,
+  for ADT/Fianzas). `estado` is an explicit field (vigente | anulada | devuelta) —
+  manual for now, possibly vigencia-derived later; future alarms hang off it.
 - One `Client` entity, referenced in multiple roles; access only via `UserClient`.
 - Custody history is full + append-only.
-- Category lists (`category`, `tender_type`) are **fixed in code**, not admin-editable.
-- Client identity = first + last name (no external identifier for now).
+- `tender_type` (Vault) is **fixed in code**, not admin-editable.
+- Client identity = a single required `name` (clients are usually companies or
+  public entities, so a surname is rarely meaningful; a full name goes in `name`).
 
 ## Deferred / open
 

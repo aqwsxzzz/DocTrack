@@ -65,6 +65,70 @@ Locked and documented in [domain-model.md](domain-model.md). Summary:
 
 **All four planned slices are built.**
 
+### Library redesign ✅ built (2026-06-12)
+
+The domain model was refined (see [domain-model.md](domain-model.md) → *Insurance types*)
+and the flat Library was re-sliced into a typed Seguro hierarchy.
+
+- BE: **`Seguro`** parent (`insurance_type`, `numero_poliza`, `vigencia_desde/hasta`,
+  `estado`, per-type `attributes` JSONB) + **`SeguroDocument`** child (1 seguro → N docs,
+  `doc_kind`), replacing `LibraryDocument`. Per-type attribute schemas validated in code
+  (`attributes.py`, `extra="forbid"`); only Vehículos (matrícula/chasis/motor/padrón) and
+  Fianzas (licitación nº/tipo/duración) populate the bag. Endpoints: seguro
+  create/list+filter/get/delete + document upload/list/download/delete, gated by the
+  `UserClient` rule (delete admin-only). Filtering by `insurance_type`, `estado`, and a
+  search over `numero_poliza` + the JSONB vehicle fields. Migration `0006` drops
+  `library_documents`, creates `seguros` + `seguro_documents`.
+- FE: `client-library` lists/filters seguros with a per-type create dialog; new detail
+  route `/clients/:id/seguros/:seguroId` shows seguro facts + its documents
+  (upload/download/delete).
+- **Vault untouched** — Library and Vault stay decoupled, even for fianzas.
+
+### Two top-level views + seguro edit ✅ built (2026-06-12)
+
+Split the two features into their own top-level sections, each defaulting to a
+cross-client "see all" list, and added seguro editing.
+
+- BE: `PATCH /seguros/{id}` (edit fields, attributes re-validated against the final
+  type, gated by client access). New cross-client lists **`GET /seguros`** and
+  **`GET /originals`** — scoped to the caller's accessible clients (admin = all,
+  member = wired) via `client.service.visible_client_ids_query`, with an optional
+  `client_id` narrow filter; both now return `client_name`.
+- FE: two fully separate sections with a **tab switcher** (`SectionTabs`:
+  Documentación ↔ Bóveda) — `/seguros` and `/boveda`, each a browser over all
+  accessible clients with a **Cliente (Todos / uno)** filter, a client column, and a
+  create dialog with a **client picker**. Seguro detail has an **Editar** dialog
+  (shared `SeguroFields` between create/edit).
+- Verified: FE lint/typecheck/build clean; BE e2e (global lists with `client_name`,
+  full-object PATCH switching type Vehículos→Fianzas with attribute re-validation,
+  estado filter). Vault access unchanged (admins + wired members).
+
+### IA finalized: split views, no combined page (2026-06-12)
+
+- **Documentación (`/seguros`) is the landing** — index/login/register/brand all point
+  there; the old `/dashboard` is removed.
+- **Library and Vault are never combined.** The combined `/clients/:id` page and the
+  member dashboard were deleted; per-client browsing now lives behind the Cliente
+  filter on each section.
+- **Detail pages are top-level:** `/seguros/:seguroId` and `/boveda/:originalId` (the
+  record carries its client). This also fixed a latent bug — the old detail routes were
+  nested under `clients/$clientId.tsx`, which had no `<Outlet/>`, so they rendered blank.
+- Admin client page's "Ver documentos" now points to `/seguros`.
+- Verified: FE typecheck/build/lint clean; BE e2e against `api:up` (migration `0006`
+  applied, create→201 with attribute normalization, JSONB matricula filter, and the
+  extra-key / bad-vigencia validators returning 422). **Still unverified:** document
+  upload→download round-trip (needs a real file + Cloudinary, like the existing Library).
+
+### Post-slice additions
+
+- **Change-password flow** (2026-06-10). BE: `POST /auth/change-password` (auth-only,
+  verifies current password via bcrypt, 400 on mismatch, 204 on success) +
+  `ChangePasswordRequest` schema + `service.change_password`. FE: `/account` route
+  under the `_authenticated` guard with `ChangePasswordForm` (current + new + confirm,
+  zod-validated), reachable via the user's name in the header. FE verified
+  (typecheck/build/lint clean). **BE not yet run** — verify on next `npm run api:up`.
+  Closes the throwaway-admin-password gap.
+
 ## Decisions (resolved 2026-06-09)
 
 1. **JWT delivery** = Bearer token (access token in `Authorization` header).
