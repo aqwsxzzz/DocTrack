@@ -8,12 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatBytes, formatDate } from "@/lib/format";
-import type { LibraryDocument } from "../types/library-types";
+import type { SeguroDocument } from "../types/library-types";
 
 interface DocumentsTableProps {
-  documents: LibraryDocument[];
-  onDownload: (doc: LibraryDocument) => void;
-  onDelete?: (doc: LibraryDocument) => void;
+  documents: SeguroDocument[];
+  onDownload: (doc: SeguroDocument) => void;
+  onDelete?: (doc: SeguroDocument) => void;
 }
 
 export function DocumentsTable({
@@ -29,7 +29,7 @@ export function DocumentsTable({
       <TableHeader>
         <TableRow>
           <TableHead>Título</TableHead>
-          <TableHead>Categoría</TableHead>
+          <TableHead>Tipo</TableHead>
           <TableHead>Tamaño</TableHead>
           <TableHead>Subido</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
@@ -39,7 +39,7 @@ export function DocumentsTable({
         {documents.map((doc) => (
           <TableRow key={doc.id}>
             <TableCell className="font-medium">{doc.title}</TableCell>
-            <TableCell className="text-muted-foreground">{doc.category}</TableCell>
+            <TableCell className="text-muted-foreground">{doc.doc_kind}</TableCell>
             <TableCell className="text-muted-foreground">
               {formatBytes(doc.size)}
             </TableCell>

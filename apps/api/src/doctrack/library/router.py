@@ -1,117 +1,119 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user, require_admin
 from ..auth.models import User
-from ..client import service as client_service
-from ..config import settings
 from ..database import get_db
 from ..storage import StorageBackend, get_storage
 from . import service
-from .models import LibraryCategory, LibraryDocument
-from .schemas import DownloadResponse, LibraryDocumentOut, LibraryListResponse
+from .dependencies import accessible_seguro, require_client_access
+from .documents import router as documents_router
+from .models import InsuranceType, Seguro, SeguroEstado
+from .schemas import SeguroCreate, SeguroListResponse, SeguroOut, SeguroUpdate
 
 router = APIRouter(tags=["library"])
 
-MAX_FILE_BYTES = 25 * 1024 * 1024
 
-
-async def _require_client_access(
-    client_id: uuid.UUID, user: User, db: AsyncSession
-) -> None:
-    if await client_service.get_client(db, client_id) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-    if not await client_service.user_has_access(db, user, client_id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-
-
-async def _accessible_document(
-    document_id: uuid.UUID,
+@router.get("/seguros", response_model=SeguroListResponse)
+async def list_all_seguros(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> LibraryDocument:
-    doc = await service.get_document(db, document_id)
-    if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-    if not await client_service.user_has_access(db, current_user, doc.client_id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    return doc
+    client_id: uuid.UUID | None = Query(default=None),
+    insurance_type: InsuranceType | None = Query(default=None),
+    estado: SeguroEstado | None = Query(default=None),
+    search: str | None = Query(default=None, min_length=1, max_length=255),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> SeguroListResponse:
+    items, total = await service.list_all_seguros(
+        db,
+        current_user,
+        client_id=client_id,
+        insurance_type=insurance_type,
+        estado=estado,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    return SeguroListResponse(items=items, total=total)
 
 
 @router.post(
-    "/clients/{client_id}/library",
-    response_model=LibraryDocumentOut,
+    "/clients/{client_id}/seguros",
+    response_model=SeguroOut,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_document(
+async def create_seguro(
     client_id: uuid.UUID,
-    title: str = Form(..., min_length=1, max_length=255),
-    category: LibraryCategory = Form(...),
-    file: UploadFile = File(...),
+    data: SeguroCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    storage: StorageBackend = Depends(get_storage),
-) -> LibraryDocumentOut:
-    if not settings.cloudinary_cloud_name:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Storage is not configured",
-        )
-    await _require_client_access(client_id, current_user, db)
-    content = await file.read()
-    if len(content) > MAX_FILE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="File exceeds the 25 MB limit",
-        )
-    file_ref = await storage.upload(
-        content=content,
-        filename=file.filename or "documento",
-        content_type=file.content_type or "application/octet-stream",
+) -> SeguroOut:
+    await require_client_access(client_id, current_user, db)
+    return await service.create_seguro(
+        db, client_id=client_id, created_by=current_user.id, data=data
     )
-    doc = await service.create_document(
-        db,
-        client_id=client_id,
-        category=category,
-        title=title,
-        uploaded_by=current_user.id,
-        file_ref=file_ref,
-    )
-    return service.build_out(doc)
 
 
-@router.get("/clients/{client_id}/library", response_model=LibraryListResponse)
-async def list_documents(
+@router.get("/clients/{client_id}/seguros", response_model=SeguroListResponse)
+async def list_seguros(
     client_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    insurance_type: InsuranceType | None = Query(default=None),
+    estado: SeguroEstado | None = Query(default=None),
+    search: str | None = Query(default=None, min_length=1, max_length=255),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-) -> LibraryListResponse:
-    await _require_client_access(client_id, current_user, db)
-    items, total = await service.list_documents(db, client_id, limit=limit, offset=offset)
-    return LibraryListResponse(items=[service.build_out(d) for d in items], total=total)
+) -> SeguroListResponse:
+    await require_client_access(client_id, current_user, db)
+    items, total = await service.list_seguros(
+        db,
+        client_id,
+        insurance_type=insurance_type,
+        estado=estado,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    return SeguroListResponse(items=items, total=total)
 
 
-@router.get("/library/{document_id}/download", response_model=DownloadResponse)
-async def download_document(
-    doc: LibraryDocument = Depends(_accessible_document),
-    storage: StorageBackend = Depends(get_storage),
-) -> DownloadResponse:
-    url = await storage.download_url(doc.file.object_key, filename=doc.file.filename)
-    return DownloadResponse(url=url)
+@router.get("/seguros/{seguro_id}", response_model=SeguroOut)
+async def get_seguro(
+    seguro: Seguro = Depends(accessible_seguro),
+    db: AsyncSession = Depends(get_db),
+) -> SeguroOut:
+    return await service.get_seguro_out(db, seguro)
 
 
-@router.delete("/library/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_document(
-    document_id: uuid.UUID,
+@router.patch("/seguros/{seguro_id}", response_model=SeguroOut)
+async def update_seguro(
+    data: SeguroUpdate,
+    seguro: Seguro = Depends(accessible_seguro),
+    db: AsyncSession = Depends(get_db),
+) -> SeguroOut:
+    try:
+        return await service.update_seguro(db, seguro, data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+
+@router.delete("/seguros/{seguro_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_seguro(
+    seguro_id: uuid.UUID,
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
     storage: StorageBackend = Depends(get_storage),
 ) -> None:
-    doc = await service.get_document(db, document_id)
-    if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-    await service.delete_document(db, storage, doc)
+    seguro = await service.get_seguro(db, seguro_id)
+    if seguro is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Seguro not found")
+    await service.delete_seguro(db, storage, seguro)
+
+
+router.include_router(documents_router)

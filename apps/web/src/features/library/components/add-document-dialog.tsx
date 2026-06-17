@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,30 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useUploadDocumentMutation } from "../api/library-queries";
-import {
-  LIBRARY_CATEGORIES,
-  type LibraryCategory,
-} from "../types/library-types";
+import { DOC_KINDS, type DocKind } from "../types/library-types";
 
-export function UploadDocumentDialog({
-  clientId,
+export function AddDocumentDialog({
+  seguroId,
 }: {
-  clientId: string;
+  seguroId: string;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<LibraryCategory>("Póliza");
+  const [docKind, setDocKind] = useState<DocKind>("Póliza");
   const [file, setFile] = useState<File | null>(null);
-  const mutation = useUploadDocumentMutation(clientId);
+  const mutation = useUploadDocumentMutation(seguroId);
 
   function handleSubmit(): void {
     if (!title.trim() || !file) {
@@ -41,7 +38,7 @@ export function UploadDocumentDialog({
       return;
     }
     mutation.mutate(
-      { title: title.trim(), category, file },
+      { title: title.trim(), doc_kind: docKind, file },
       {
         onSuccess: () => {
           toast.success("Documento subido");
@@ -73,16 +70,16 @@ export function UploadDocumentDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Categoría</Label>
+            <Label>Tipo de documento</Label>
             <Select
-              value={category}
-              onValueChange={(value) => setCategory(value as LibraryCategory)}
+              value={docKind}
+              onValueChange={(value) => setDocKind(value as DocKind)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LIBRARY_CATEGORIES.map((item) => (
+                {DOC_KINDS.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
                   </SelectItem>

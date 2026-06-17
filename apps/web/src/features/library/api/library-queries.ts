@@ -6,47 +6,133 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import {
-  deleteDocument,
-  listDocuments,
-  uploadDocument,
+  createSeguro,
+  deleteSeguro,
+  deleteSeguroDocument,
+  getSeguro,
+  listAllSeguros,
+  listSeguroDocuments,
+  listSeguros,
+  updateSeguro,
+  uploadSeguroDocument,
 } from "./library-api";
 import type {
-  LibraryDocument,
-  LibraryListResponse,
-  UploadDocumentInput,
+  CreateSeguroInput,
+  Seguro,
+  SeguroDocument,
+  SeguroDocumentListResponse,
+  SeguroFilters,
+  SeguroListResponse,
+  SeguroUpdateInput,
+  UploadSeguroDocumentInput,
 } from "../types/library-types";
 
 export const libraryKeys = {
-  list: (clientId: string) => ["library", clientId] as const,
+  seguros: (clientId: string, filters: SeguroFilters) =>
+    ["seguros", clientId, filters] as const,
+  allSeguros: (filters: SeguroFilters) => ["seguros", "all", filters] as const,
+  seguro: (seguroId: string) => ["seguro", seguroId] as const,
+  documents: (seguroId: string) => ["seguro-documents", seguroId] as const,
 };
 
-export function useLibraryQuery(
+export function useSegurosQuery(
   clientId: string,
-): UseQueryResult<LibraryListResponse, Error> {
+  filters: SeguroFilters,
+): UseQueryResult<SeguroListResponse, Error> {
   return useQuery({
-    queryKey: libraryKeys.list(clientId),
-    queryFn: () => listDocuments(clientId),
+    queryKey: libraryKeys.seguros(clientId, filters),
+    queryFn: () => listSeguros(clientId, filters),
+  });
+}
+
+export function useAllSegurosQuery(
+  filters: SeguroFilters,
+): UseQueryResult<SeguroListResponse, Error> {
+  return useQuery({
+    queryKey: libraryKeys.allSeguros(filters),
+    queryFn: () => listAllSeguros(filters),
+  });
+}
+
+export function useSeguroQuery(seguroId: string): UseQueryResult<Seguro, Error> {
+  return useQuery({
+    queryKey: libraryKeys.seguro(seguroId),
+    queryFn: () => getSeguro(seguroId),
+  });
+}
+
+interface CreateSeguroVars {
+  clientId: string;
+  input: CreateSeguroInput;
+}
+
+export function useCreateSeguroMutation(): UseMutationResult<
+  Seguro,
+  Error,
+  CreateSeguroVars
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ clientId, input }: CreateSeguroVars) =>
+      createSeguro(clientId, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["seguros"] }),
+  });
+}
+
+export function useUpdateSeguroMutation(
+  seguroId: string,
+): UseMutationResult<Seguro, Error, SeguroUpdateInput> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SeguroUpdateInput) => updateSeguro(seguroId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seguros"] });
+      queryClient.invalidateQueries({ queryKey: libraryKeys.seguro(seguroId) });
+    },
+  });
+}
+
+export function useDeleteSeguroMutation(): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSeguro,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seguros"] }),
+  });
+}
+
+export function useSeguroDocumentsQuery(
+  seguroId: string,
+): UseQueryResult<SeguroDocumentListResponse, Error> {
+  return useQuery({
+    queryKey: libraryKeys.documents(seguroId),
+    queryFn: () => listSeguroDocuments(seguroId),
   });
 }
 
 export function useUploadDocumentMutation(
-  clientId: string,
-): UseMutationResult<LibraryDocument, Error, UploadDocumentInput> {
+  seguroId: string,
+): UseMutationResult<SeguroDocument, Error, UploadSeguroDocumentInput> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UploadDocumentInput) => uploadDocument(clientId, input),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: libraryKeys.list(clientId) }),
+    mutationFn: (input: UploadSeguroDocumentInput) =>
+      uploadSeguroDocument(seguroId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.documents(seguroId) });
+      queryClient.invalidateQueries({ queryKey: ["seguros"] });
+    },
   });
 }
 
 export function useDeleteDocumentMutation(
-  clientId: string,
+  seguroId: string,
 ): UseMutationResult<void, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteDocument,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: libraryKeys.list(clientId) }),
+    mutationFn: deleteSeguroDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.documents(seguroId) });
+      queryClient.invalidateQueries({ queryKey: ["seguros"] });
+    },
   });
 }
